@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .operationDiv {
+
+        }
+        .nonDisplay {
+            display: none;
+        }
+        .doDisplay {
+
+        }
+    </style>
+</head>
+<body>
+   <div>
+       <a href="" id="genAcctLink">Generate Accounts</a> | <a href="" id="depositLink">Deposits</a> | <a href="">Withdrawal</a>
+   </div>
+
+   <div class="operationDiv nonDisplay" id="genAccountsdiv">
+       <p>Generated Accounts</p>
+
+       <table id="genAccountsTable">
+           <thead>
+           <tr>
+               <th> Account Name </th>
+               <th> Phone Number </th>
+               <th> Account Number </th>
+               <th> Total Balance</th>
+           </tr>
+           </thead>
+           <tbody id="genAccountsTableBody">
+
+           </tbody>
+       </table>
+   </div>
+
+   <div class="operationDiv nonDisplay" id="depositDiv">
+        <form id="depositForm">
+                <table>
+                    <tr>
+                        <td>Account Number</td>
+                        <td><input id="acctNoDeposit" name="acctNo" type="number"></td>
+                    </tr>
+                    <tr>
+                        <td>Deposit Amount</td>
+                        <td><input id="depositAmt" name="depositAmt" type="number"></td>
+                    </tr>
+                    <tr><td colspan="2"><button>Deposit</button></td></tr>
+                </table>
+        </form>
+
+       <br>
+       <table id="depositsTable">
+           <thead>
+           <tr>
+               <th> Account Number </th>
+               <th> Amount</th>
+               <th> Balance</th>
+           </tr>
+           </thead>
+           <tbody id="depositsTableBody">
+
+           </tbody>
+       </table>
+   </div>
+
+   <script>
+
+       //For efficiency, we will get all elements here so that we do not have to always traverse the DOM when
+       // a control element is needed
+       const genAcctsDiv = document.getElementById("genAccountsdiv")
+       const genAccountsTable = document.getElementById("genAccountsTable");
+       const genAcctTableBody = document.getElementById("genAccountsTableBody");
+       const showGenAcctLink = document.getElementById("genAcctLink");
+       const depositDiv = document.getElementById("depositDiv");
+       const depositForm = document.getElementById("depositForm");
+       const depositLink = document.getElementById("depositLink");
+       const depositsTableBody = document.getElementById("depositsTableBody");
+
+       showGenAcctLink.onclick = (e) => {
+            e.preventDefault();
+           displayNone();
+           //Create the accounts and attach it to the table
+           createAccounts();
+           //display the DIV for generation of accounts
+           genAcctsDiv.classList.remove("nonDisplay");
+       };
+
+       depositLink.onclick = (e) => {
+           e.preventDefault();
+           displayNone();
+           //display the DIV for deposits
+           depositDiv.classList.remove("nonDisplay");
+       };
+
+       depositForm.onsubmit = (e) => {
+           e.preventDefault();
+
+           let acctNoDeposit = document.getElementById("acctNoDeposit").value;
+           let depositAmt = document.getElementById("depositAmt").value;
+           const formData = new FormData(depositForm);
+
+           const requestOptions = {
+               method: 'POST',
+               body: formData
+           };
+
+           fetch("/operations/depositFunds", requestOptions)
+               .then(response => response.json())
+               .then(result => {
+                   console.log(result);
+                   let transactions = result.transactionsList;
+                   let tableRows = "";
+                   for (let i = 0; i < transactions.length; i++) {
+                       let tranxData = transactions[i];
+                       tableRows += "<tr><td>" + tranxData.accountNumber + "</td>"
+                           + "<td>" + tranxData.amount + "</td>"
+                           + "<td>" + tranxData.finalAmount + "</td></tr>";
+                   }
+
+                   depositsTableBody.innerHTML = tableRows;
+               })
+               .catch(error => console.log('error', error));
+
+       }
+
+       //Thi function will hide all DIVs related to operations.
+       function displayNone() {
+           const divs = document.getElementsByClassName("operationDiv");
+           for(let i = 0; i < divs.length; i++) {
+               const div = divs[i];
+               div.classList.add("nonDisplay");
+           }
+       }
+
+       function createAccounts(){
+           const requestOptions = {
+               method: 'GET',
+               redirect: 'follow'
+           };
+
+           fetch("/operations/genAccts", requestOptions)
+               .then(response => response.json())
+               .then(result => {
+                   //loop through the results and create rows to be appended to the table
+                   //The logic here will first re
+                   let tableRows = "";
+                    for (let i = 0; i < result.length; i++) {
+                        let acctData = result[i];
+                        tableRows += "<tr><td>" + acctData.accountName + "</td>"
+                            + "<td>" + acctData.phoneNumber + "</td>"
+                            + "<td>" + acctData.accountNumber + "</td>"
+                            + "<td>" + acctData.totalBalance + "</td></tr>";
+                    }
+                   genAcctTableBody.innerHTML = tableRows;
+               })
+               .catch(error => console.log('error', error));
+       }
+
+       function deposit() {
+
+       }
+   </script>
+</body>
+</html>
